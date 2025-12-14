@@ -2,6 +2,7 @@ import QRCode from 'qrcode';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import { uploadQRCodeToS3 } from './s3Service.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,7 +12,7 @@ const __dirname = path.dirname(__filename);
  * @param {string} tableId - Table ID
  * @param {string} qrCode - QR code string
  * @param {string} frontendUrl - Frontend URL for QR code link
- * @returns {Promise<string>} - Path to QR code image
+ * @returns {Promise<string>} - URL to QR code image (S3 URL or local path)
  */
 export const generateQRCode = async (tableId, qrCode, frontendUrl) => {
   try {
@@ -21,32 +22,46 @@ export const generateQRCode = async (tableId, qrCode, frontendUrl) => {
 
     // Use the QR code string for the URL path instead of tableId
     const qrData = `${frontendUrl}/scan/${qrCode}`;
-    const uploadDir = path.join(__dirname, '../../uploads/qrcodes');
-    
-    // Ensure directory exists
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-      console.log(`[QR Code] Created directory: ${uploadDir}`);
-    }
-    
-    const qrCodePath = path.join(uploadDir, `${tableId}.png`);
     
     console.log(`[QR Code] Generating QR code for table ${tableId}`);
     console.log(`[QR Code] QR Data: ${qrData}`);
-    console.log(`[QR Code] Save path: ${qrCodePath}`);
     
-    await QRCode.toFile(qrCodePath, qrData, {
+    // Generate QR code as buffer
+    const qrCodeBuffer = await QRCode.toBuffer(qrData, {
       errorCorrectionLevel: 'H',
       type: 'png',
       width: 300,
       margin: 1,
     });
     
-    console.log(`[QR Code] Successfully generated QR code at ${qrCodePath}`);
+    // Check if S3 is configured
+    const useS3 = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY;
     
-    // Return the URL path that can be accessed via the /uploads static route
-    const qrCodeUrl = `/uploads/qrcodes/${tableId}.png`;
-    return qrCodeUrl;
+    if (useS3) {
+      // Upload to S3
+      const fileName = `${tableId}.png`;
+      const s3Url = await uploadQRCodeToS3(qrCodeBuffer, fileName);
+      console.log(`[QR Code] Successfully uploaded QR code to S3: ${s3Url}`);
+      return s3Url;
+    } else {
+      // Fallback to local storage
+      const uploadDir = path.join(__dirname, '../../uploads/qrcodes');
+      
+      // Ensure directory exists
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+        console.log(`[QR Code] Created directory: ${uploadDir}`);
+      }
+      
+      const qrCodePath = path.join(uploadDir, `${tableId}.png`);
+      fs.writeFileSync(qrCodePath, qrCodeBuffer);
+      
+      console.log(`[QR Code] Successfully generated QR code at ${qrCodePath}`);
+      
+      // Return the URL path that can be accessed via the /uploads static route
+      const qrCodeUrl = `/uploads/qrcodes/${tableId}.png`;
+      return qrCodeUrl;
+    }
   } catch (error) {
     console.error('[QR Code] Error generating QR code:', error);
     throw new Error(`Failed to generate QR code: ${error.message}`);

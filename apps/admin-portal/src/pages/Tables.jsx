@@ -128,7 +128,7 @@ export default function Tables() {
                       {table.qrCodeUrl ? (
                         <div className="flex items-center space-x-3">
                           <img
-                            src={`${BACKEND_URL}${table.qrCodeUrl}`}
+                            src={table.qrCodeUrl.startsWith('http') ? table.qrCodeUrl : `${BACKEND_URL}${table.qrCodeUrl}`}
                             alt={`QR Code for ${table.tableNumber}`}
                             className="w-20 h-20 object-contain border border-gray-200 rounded bg-white p-1"
                             onError={(e) => {
@@ -138,7 +138,7 @@ export default function Tables() {
                           />
                           <div className="flex flex-col space-y-1">
                             <a
-                              href={`http://localhost:8086${table.qrCodeUrl}`}
+                              href={table.qrCodeUrl.startsWith('http') ? table.qrCodeUrl : `http://localhost:8086${table.qrCodeUrl}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-espro-orange hover:underline text-sm"

@@ -2,6 +2,7 @@ import express from 'express';
 import Table from '../models/Table.js';
 import { protect, requireAdmin } from '../middleware/auth.js';
 import { generateQRCode, generateQRCodeString } from '../services/qrCodeService.js';
+import { deleteQRCodeFromS3 } from '../services/s3Service.js';
 
 const router = express.Router();
 
@@ -186,11 +187,62 @@ router.delete('/:id', protect, requireAdmin, async (req, res) => {
       });
     }
 
+    // Delete QR code from S3 if it exists and is an S3 URL
+    if (table.qrCodeUrl && table.qrCodeUrl.startsWith('http')) {
+      // Extract filename from S3 URL or use table ID
+      const fileName = `${table._id}.png`;
+      await deleteQRCodeFromS3(fileName);
+    }
+
     await table.deleteOne();
 
     res.json({
       success: true,
       message: 'Table deleted successfully',
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+// @route   POST /api/tables/:id/regenerate-qr
+// @desc    Regenerate QR code for a table
+// @access  Private/Admin
+router.post('/:id/regenerate-qr', protect, requireAdmin, async (req, res) => {
+  try {
+    const table = await Table.findById(req.params.id);
+    
+    if (!table) {
+      return res.status(404).json({
+        success: false,
+        message: 'Table not found',
+      });
+    }
+
+    // Delete old QR code from S3 if it exists
+    if (table.qrCodeUrl && table.qrCodeUrl.startsWith('http')) {
+      const fileName = `${table._id}.png`;
+      await deleteQRCodeFromS3(fileName);
+    }
+
+    // Generate new QR code
+    const frontendUrl = process.env.SELF_ORDER_URL || process.env.FRONTEND_URL || 'http://localhost:8084';
+    const qrCodeUrl = await generateQRCode(
+      table._id.toString(),
+      table.qrCode,
+      frontendUrl
+    );
+    
+    table.qrCodeUrl = qrCodeUrl;
+    await table.save();
+
+    res.json({
+      success: true,
+      table,
+      message: 'QR code regenerated successfully',
     });
   } catch (error) {
     res.status(500).json({
