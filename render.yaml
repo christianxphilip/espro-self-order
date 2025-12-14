@@ -25,14 +25,11 @@ services:
         value: 3000
       - key: CORS_ORIGINS
         value: https://espro-self-order-admin.onrender.com,https://espro-self-order-portal.onrender.com,https://espro-self-order-barista.onrender.com
-      - key: AWS_ACCESS_KEY_ID
-        value: [REDACTED]
-      - key: AWS_SECRET_ACCESS_KEY
-        value: [REDACTED]
-      - key: AWS_S3_BUCKET
-        value: espro-collective
-      - key: AWS_REGION
-        value: ap-southeast-1
+      # AWS credentials should be set in Render dashboard as environment variables:
+      # - AWS_ACCESS_KEY_ID
+      # - AWS_SECRET_ACCESS_KEY
+      # - AWS_S3_BUCKET (default: espro-collective)
+      # - AWS_REGION (default: ap-southeast-1)
     healthCheckPath: /api/health
 
   # Admin Portal
