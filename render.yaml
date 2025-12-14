@@ -1,0 +1,59 @@
+services:
+  # Backend API Service
+  - type: web
+    name: espro-self-order-backend
+    env: node
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && node src/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        value: mongodb+srv://espro-user:espro-user@espro-self-order.mbfu3a7.mongodb.net/?appName=espro-self-order
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ENABLE_WEBSOCKET
+        value: false
+      - key: SOCKET_IO_PORT
+        value: 8002
+      - key: POLLING_INTERVAL
+        value: 3000
+      - key: CORS_ORIGINS
+        value: https://espro-self-order-admin.onrender.com,https://espro-self-order-portal.onrender.com,https://espro-self-order-barista.onrender.com
+    healthCheckPath: /api/health
+
+  # Admin Portal
+  - type: web
+    name: espro-self-order-admin
+    env: static
+    plan: free
+    buildCommand: cd apps/admin-portal && npm install && npm run build
+    staticPublishPath: apps/admin-portal/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://espro-self-order-backend.onrender.com/api
+
+  # Self-Order Portal
+  - type: web
+    name: espro-self-order-portal
+    env: static
+    plan: free
+    buildCommand: cd apps/self-order-portal && npm install && npm run build
+    staticPublishPath: apps/self-order-portal/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://espro-self-order-backend.onrender.com/api
+
+  # Barista Portal
+  - type: web
+    name: espro-self-order-barista
+    env: static
+    plan: free
+    buildCommand: cd apps/barista-portal && npm install && npm run build
+    staticPublishPath: apps/barista-portal/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://espro-self-order-backend.onrender.com/api
