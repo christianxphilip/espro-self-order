@@ -2,10 +2,12 @@ services:
   # Backend API Service
   - type: web
     name: espro-self-order-backend
-    env: node
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    region: oregon
+    branch: master
     plan: free
-    buildCommand: cd backend && npm install
-    startCommand: cd backend && node src/server.js
     envVars:
       - key: NODE_ENV
         value: production
@@ -28,10 +30,12 @@ services:
   # Admin Portal
   - type: web
     name: espro-self-order-admin
-    env: static
+    env: docker
+    dockerfilePath: ./apps/admin-portal/Dockerfile
+    dockerContext: ./apps/admin-portal
+    region: oregon
+    branch: master
     plan: free
-    buildCommand: cd apps/admin-portal && npm install && npm run build
-    staticPublishPath: apps/admin-portal/dist
     envVars:
       - key: VITE_API_URL
         value: https://espro-self-order-backend.onrender.com/api
@@ -39,10 +43,12 @@ services:
   # Self-Order Portal
   - type: web
     name: espro-self-order-portal
-    env: static
+    env: docker
+    dockerfilePath: ./apps/self-order-portal/Dockerfile
+    dockerContext: ./apps/self-order-portal
+    region: oregon
+    branch: master
     plan: free
-    buildCommand: cd apps/self-order-portal && npm install && npm run build
-    staticPublishPath: apps/self-order-portal/dist
     envVars:
       - key: VITE_API_URL
         value: https://espro-self-order-backend.onrender.com/api
@@ -50,10 +56,12 @@ services:
   # Barista Portal
   - type: web
     name: espro-self-order-barista
-    env: static
+    env: docker
+    dockerfilePath: ./apps/barista-portal/Dockerfile
+    dockerContext: ./apps/barista-portal
+    region: oregon
+    branch: master
     plan: free
-    buildCommand: cd apps/barista-portal && npm install && npm run build
-    staticPublishPath: apps/barista-portal/dist
     envVars:
       - key: VITE_API_URL
         value: https://espro-self-order-backend.onrender.com/api
