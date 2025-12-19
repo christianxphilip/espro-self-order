@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Layout from '../components/Layout';
 import { tablesAPI } from '../services/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:6000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:7001/api';
 const BACKEND_URL = API_BASE_URL.replace('/api', '');
 const SELF_ORDER_URL = import.meta.env.VITE_SELF_ORDER_URL || 'http://localhost:8084';
 
@@ -15,6 +15,8 @@ export default function Tables() {
     tableNumber: '',
     location: '',
     isActive: true,
+    customRedirectEnabled: false,
+    customRedirectUrl: '',
   });
 
   const { data: tables, isLoading } = useQuery({
@@ -27,7 +29,7 @@ export default function Tables() {
     onSuccess: () => {
       queryClient.invalidateQueries(['tables']);
       setShowModal(false);
-      setFormData({ tableNumber: '', location: '', isActive: true });
+      setFormData({ tableNumber: '', location: '', isActive: true, customRedirectEnabled: false, customRedirectUrl: '' });
     },
   });
 
@@ -37,7 +39,7 @@ export default function Tables() {
       queryClient.invalidateQueries(['tables']);
       setShowModal(false);
       setEditingTable(null);
-      setFormData({ tableNumber: '', location: '', isActive: true });
+      setFormData({ tableNumber: '', location: '', isActive: true, customRedirectEnabled: false, customRedirectUrl: '' });
     },
   });
 
@@ -54,6 +56,8 @@ export default function Tables() {
       tableNumber: table.tableNumber,
       location: table.location || '',
       isActive: table.isActive,
+      customRedirectEnabled: table.customRedirectEnabled || false,
+      customRedirectUrl: table.customRedirectUrl || '',
     });
     setShowModal(true);
   };
@@ -81,7 +85,7 @@ export default function Tables() {
           <button
             onClick={() => {
               setEditingTable(null);
-              setFormData({ tableNumber: '', location: '', isActive: true });
+              setFormData({ tableNumber: '', location: '', isActive: true, customRedirectEnabled: false, customRedirectUrl: '' });
               setShowModal(true);
             }}
             className="bg-espro-orange text-white px-4 py-2 rounded-lg hover:bg-orange-600"
@@ -148,7 +152,9 @@ export default function Tables() {
                             {table.qrCode && (
                               <button
                                 onClick={() => {
-                                  window.open(`${SELF_ORDER_URL}/scan/${table.qrCode}`, '_blank');
+                                  // Use backend redirect endpoint to respect custom redirect settings
+                                  const redirectUrl = `${BACKEND_URL}/api/tables/redirect?table=${encodeURIComponent(table.tableNumber)}`;
+                                  window.open(redirectUrl, '_blank');
                                 }}
                                 className="text-blue-600 hover:text-blue-800 hover:underline text-sm text-left"
                                 title={`Open self-order portal for ${table.tableNumber}`}
@@ -227,6 +233,40 @@ export default function Tables() {
                     className="mr-2"
                   />
                   <label className="text-sm font-medium text-gray-700">Active</label>
+                </div>
+                <div className="border-t pt-4 mt-4">
+                  <div className="flex items-center mb-3">
+                    <input
+                      type="checkbox"
+                      checked={formData.customRedirectEnabled}
+                      onChange={(e) =>
+                        setFormData({ ...formData, customRedirectEnabled: e.target.checked })
+                      }
+                      className="mr-2"
+                    />
+                    <label className="text-sm font-medium text-gray-700">
+                      Redirect to specific URL
+                    </label>
+                  </div>
+                  {formData.customRedirectEnabled && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Redirect URL
+                      </label>
+                      <input
+                        type="url"
+                        value={formData.customRedirectUrl}
+                        onChange={(e) =>
+                          setFormData({ ...formData, customRedirectUrl: e.target.value })
+                        }
+                        placeholder="https://example.com"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        When enabled, QR code scans will redirect to this URL instead of the self-order portal.
+                      </p>
+                    </div>
+                  )}
                 </div>
                 <div className="flex space-x-2">
                   <button

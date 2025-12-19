@@ -16,6 +16,8 @@ router.get('/public', async (req, res) => {
         websocketEnabled: settings.websocketEnabled,
         pollingEnabled: settings.pollingEnabled,
         pollingInterval: settings.pollingInterval,
+        customRedirectEnabled: settings.customRedirectEnabled,
+        customRedirectUrl: settings.customRedirectUrl,
       },
     });
   } catch (error) {
@@ -52,7 +54,7 @@ router.get('/', async (req, res) => {
 // @access  Private/Admin
 router.put('/', async (req, res) => {
   try {
-    const { websocketEnabled, pollingEnabled, pollingInterval } = req.body;
+    const { websocketEnabled, pollingEnabled, pollingInterval, customRedirectEnabled, customRedirectUrl } = req.body;
 
     let settings = await Settings.findOne();
     
@@ -62,6 +64,8 @@ router.put('/', async (req, res) => {
         websocketEnabled: websocketEnabled ?? false,
         pollingEnabled: pollingEnabled ?? true,
         pollingInterval: pollingInterval ?? 3000,
+        customRedirectEnabled: customRedirectEnabled ?? false,
+        customRedirectUrl: customRedirectUrl || null,
         updatedBy: req.user._id,
       });
     } else {
@@ -81,6 +85,12 @@ router.put('/', async (req, res) => {
         }
         settings.pollingInterval = pollingInterval;
       }
+      if (customRedirectEnabled !== undefined) {
+        settings.customRedirectEnabled = customRedirectEnabled;
+      }
+      if (customRedirectUrl !== undefined) {
+        settings.customRedirectUrl = customRedirectUrl || null;
+      }
       settings.updatedBy = req.user._id;
       await settings.save();
     }
@@ -99,3 +109,4 @@ router.put('/', async (req, res) => {
 });
 
 export default router;
+

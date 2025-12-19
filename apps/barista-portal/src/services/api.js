@@ -29,7 +29,13 @@ export const orderAPI = {
 // Barista API
 export const baristaAPI = {
   getPendingOrders: () => api.get('/barista/orders/pending'),
-  getActiveOrders: () => api.get('/barista/orders/active'),
+  getActiveOrders: (status) => {
+    const params = status ? { params: { status } } : {};
+    return api.get('/barista/orders/active', params);
+  },
+  getTodayOrders: () => api.get('/barista/orders/today'),
+  getAllOrders: () => api.get('/barista/orders/all'),
+  getCompletedOrders: () => api.get('/barista/orders/completed'),
   getDashboard: () => api.get('/barista/dashboard'),
   startOrder: (id) => api.put(`/barista/orders/${id}/start`),
   completeOrder: (id) => api.put(`/barista/orders/${id}/complete`),

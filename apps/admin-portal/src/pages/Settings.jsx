@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Layout from '../components/Layout';
 import { settingsAPI } from '../services/api';
@@ -9,19 +9,27 @@ export default function Settings() {
     websocketEnabled: false,
     pollingEnabled: true,
     pollingInterval: 3000,
+    customRedirectEnabled: false,
+    customRedirectUrl: '',
   });
 
   const { data, isLoading } = useQuery({
     queryKey: ['settings'],
     queryFn: () => settingsAPI.get().then((res) => res.data.settings),
-    onSuccess: (settings) => {
-      setFormData({
-        websocketEnabled: settings.websocketEnabled ?? false,
-        pollingEnabled: settings.pollingEnabled ?? true,
-        pollingInterval: settings.pollingInterval ?? 3000,
-      });
-    },
   });
+
+  // Update form data when settings are loaded
+  useEffect(() => {
+    if (data) {
+      setFormData({
+        websocketEnabled: data.websocketEnabled ?? false,
+        pollingEnabled: data.pollingEnabled ?? true,
+        pollingInterval: data.pollingInterval ?? 3000,
+        customRedirectEnabled: data.customRedirectEnabled ?? false,
+        customRedirectUrl: data.customRedirectUrl || '',
+      });
+    }
+  }, [data]);
 
   const updateMutation = useMutation({
     mutationFn: (data) => settingsAPI.update(data),
@@ -148,6 +156,49 @@ export default function Settings() {
               )}
             </div>
 
+            {/* QR Code Redirect Settings */}
+            <div className="border-b pb-6">
+              <h2 className="text-xl font-semibold text-espro-dark mb-4">QR Code Redirect</h2>
+              
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <label className="text-gray-700 font-medium">Enable Global Custom Redirect</label>
+                    <p className="text-sm text-gray-500 mt-1">
+                      When enabled, all QR code scans will redirect to the specified URL instead of the self-order portal.
+                    </p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.customRedirectEnabled}
+                      onChange={(e) => handleChange('customRedirectEnabled', e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-espro-orange"></div>
+                  </label>
+                </div>
+              </div>
+
+              {formData.customRedirectEnabled && (
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">
+                    Custom Redirect URL
+                  </label>
+                  <input
+                    type="url"
+                    value={formData.customRedirectUrl}
+                    onChange={(e) => handleChange('customRedirectUrl', e.target.value)}
+                    placeholder="https://example.com"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-espro-orange focus:border-espro-orange"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    All QR code scans will redirect to this URL when enabled.
+                  </p>
+                </div>
+              )}
+            </div>
+
             {/* Submit Button */}
             <div className="flex justify-end space-x-3">
               <button
@@ -157,6 +208,8 @@ export default function Settings() {
                     websocketEnabled: data?.websocketEnabled ?? false,
                     pollingEnabled: data?.pollingEnabled ?? true,
                     pollingInterval: data?.pollingInterval ?? 3000,
+                    customRedirectEnabled: data?.customRedirectEnabled ?? false,
+                    customRedirectUrl: data?.customRedirectUrl || '',
                   });
                 }}
                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
@@ -177,3 +230,4 @@ export default function Settings() {
     </Layout>
   );
 }
+

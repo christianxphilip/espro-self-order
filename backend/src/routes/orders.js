@@ -108,16 +108,69 @@ router.post('/', async (req, res) => {
       }
 
       const quantity = item.quantity || 1;
-      const itemTotal = menuItem.price * quantity;
+      
+      // Calculate base price
+      let itemPrice = menuItem.price;
+      
+      // Add temperature surcharge for iced (+20 pesos)
+      const temperature = item.temperature || 'hot';
+      if (temperature === 'iced') {
+        itemPrice += 20;
+      }
+      
+      // Add extra espresso shot (+30 pesos) if allowed and selected
+      if (item.extraEspresso && menuItem.allowExtraEspresso) {
+        itemPrice += 30;
+      }
+      
+      // Add oat milk substitute (+40 pesos) if allowed and selected
+      if (item.oatMilk && menuItem.allowOatMilk) {
+        itemPrice += 40;
+      }
+      
+      // Validate temperature option
+      if (menuItem.temperatureOption === 'iced-only' && temperature !== 'iced') {
+        return res.status(400).json({
+          success: false,
+          message: `${menuItem.name} is only available in iced`,
+        });
+      }
+      
+      if (menuItem.temperatureOption === 'hot' && temperature !== 'hot') {
+        return res.status(400).json({
+          success: false,
+          message: `${menuItem.name} is only available in hot`,
+        });
+      }
+      
+      // Validate add-ons
+      if (item.extraEspresso && !menuItem.allowExtraEspresso) {
+        return res.status(400).json({
+          success: false,
+          message: `${menuItem.name} does not support extra espresso shot`,
+        });
+      }
+      
+      if (item.oatMilk && !menuItem.allowOatMilk) {
+        return res.status(400).json({
+          success: false,
+          message: `${menuItem.name} does not support oat milk substitute`,
+        });
+      }
+      
+      const itemTotal = itemPrice * quantity;
       totalAmount += itemTotal;
 
       orderItems.push({
         menuItemId: menuItem._id,
         name: menuItem.name,
-        price: menuItem.price,
+        price: itemPrice, // Store the calculated price with add-ons
         quantity,
         status: 'pending',
         notes: item.notes || '',
+        temperature: temperature,
+        extraEspresso: item.extraEspresso || false,
+        oatMilk: item.oatMilk || false,
       });
     }
 
@@ -157,12 +210,27 @@ router.post('/', async (req, res) => {
 });
 
 // @route   GET /api/orders/table/:tableId
-// @desc    Get orders for a table
+// @desc    Get orders for a table (only from active billing group)
 // @access  Public (for polling)
 // NOTE: This route must come before /:id to avoid route conflicts
 router.get('/table/:tableId', async (req, res) => {
   try {
-    const orders = await Order.find({ tableId: req.params.tableId })
+    // Get the active billing group
+    const activeBillingGroup = await BillingGroup.findOne({ isActive: true });
+    
+    if (!activeBillingGroup) {
+      // If no active billing group, return empty array
+      return res.json({
+        success: true,
+        orders: [],
+      });
+    }
+
+    // Get orders for the table that belong to the active billing group
+    const orders = await Order.find({ 
+      tableId: req.params.tableId,
+      billingGroupId: activeBillingGroup._id
+    })
       .sort({ createdAt: -1 });
     
     res.json({

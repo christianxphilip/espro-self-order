@@ -98,6 +98,7 @@ export default function OrderCard({
                   item={item}
                   onStatusChange={(status) => handleItemStatusChange(item._id, status)}
                   disabled={isUpdatingItem}
+                  isLoading={isUpdatingItem}
                 />
               ))}
             </div>

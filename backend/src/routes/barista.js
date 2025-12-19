@@ -1,5 +1,6 @@
 import express from 'express';
 import Order from '../models/Order.js';
+import BillingGroup from '../models/BillingGroup.js';
 import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -7,13 +8,29 @@ const router = express.Router();
 // All routes require authentication
 router.use(protect);
 
+// Helper function to get active billing group
+const getActiveBillingGroup = async () => {
+  const billingGroup = await BillingGroup.findOne({ isActive: true });
+  return billingGroup;
+};
+
 // @route   GET /api/barista/orders/pending
 // @desc    Get pending orders
 // @access  Private
 router.get('/orders/pending', async (req, res) => {
   try {
+    const billingGroup = await getActiveBillingGroup();
+    
+    if (!billingGroup) {
+      return res.json({
+        success: true,
+        orders: [],
+      });
+    }
+
     const orders = await Order.find({
-      status: { $in: ['pending', 'confirmed'] }
+      status: { $in: ['pending', 'confirmed'] },
+      billingGroupId: billingGroup._id
     })
       .populate('tableId', 'tableNumber location')
       .sort({ createdAt: 1 });
@@ -32,14 +49,141 @@ router.get('/orders/pending', async (req, res) => {
 
 // @route   GET /api/barista/orders/active
 // @desc    Get active orders (pending, confirmed, preparing, ready)
+// @desc    Optional query param: status (pending, preparing, ready) to filter by specific status
 // @access  Private
 router.get('/orders/active', async (req, res) => {
   try {
-    const orders = await Order.find({
-      status: { $in: ['pending', 'confirmed', 'preparing', 'ready'] }
-    })
+    const billingGroup = await getActiveBillingGroup();
+    
+    if (!billingGroup) {
+      return res.json({
+        success: true,
+        orders: [],
+      });
+    }
+
+    const { status } = req.query;
+    
+    let query = {
+      status: { $in: ['pending', 'confirmed', 'preparing', 'ready'] },
+      billingGroupId: billingGroup._id
+    };
+    
+    // Filter by specific status if provided
+    if (status === 'pending') {
+      query.status = { $in: ['pending', 'confirmed'] };
+    } else if (status === 'preparing') {
+      query.status = 'preparing';
+    } else if (status === 'ready') {
+      query.status = 'ready';
+    }
+    
+    const orders = await Order.find(query)
       .populate('tableId', 'tableNumber location')
       .sort({ createdAt: 1 });
+    
+    res.json({
+      success: true,
+      orders,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+// @route   GET /api/barista/orders/today
+// @desc    Get all orders from today (including completed/dispatched)
+// @access  Private
+router.get('/orders/today', async (req, res) => {
+  try {
+    const billingGroup = await getActiveBillingGroup();
+    
+    if (!billingGroup) {
+      return res.json({
+        success: true,
+        orders: [],
+      });
+    }
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    const orders = await Order.find({
+      createdAt: {
+        $gte: startOfDay
+      },
+      billingGroupId: billingGroup._id
+    })
+      .populate('tableId', 'tableNumber location')
+      .sort({ createdAt: -1 });
+    
+    res.json({
+      success: true,
+      orders,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+// @route   GET /api/barista/orders/all
+// @desc    Get all orders (all statuses)
+// @access  Private
+router.get('/orders/all', async (req, res) => {
+  try {
+    const billingGroup = await getActiveBillingGroup();
+    
+    if (!billingGroup) {
+      return res.json({
+        success: true,
+        orders: [],
+      });
+    }
+
+    const orders = await Order.find({
+      billingGroupId: billingGroup._id
+    })
+      .populate('tableId', 'tableNumber location')
+      .sort({ createdAt: -1 });
+    
+    res.json({
+      success: true,
+      orders,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+// @route   GET /api/barista/orders/completed
+// @desc    Get completed orders
+// @access  Private
+router.get('/orders/completed', async (req, res) => {
+  try {
+    const billingGroup = await getActiveBillingGroup();
+    
+    if (!billingGroup) {
+      return res.json({
+        success: true,
+        orders: [],
+      });
+    }
+
+    const orders = await Order.find({
+      status: 'completed',
+      billingGroupId: billingGroup._id
+    })
+      .populate('tableId', 'tableNumber location')
+      .sort({ createdAt: -1 });
     
     res.json({
       success: true,
@@ -58,14 +202,50 @@ router.get('/orders/active', async (req, res) => {
 // @access  Private
 router.get('/dashboard', async (req, res) => {
   try {
-    const [pendingCount, preparingCount, readyCount, totalToday] = await Promise.all([
-      Order.countDocuments({ status: { $in: ['pending', 'confirmed'] } }),
-      Order.countDocuments({ status: 'preparing' }),
-      Order.countDocuments({ status: 'ready' }),
+    const billingGroup = await getActiveBillingGroup();
+    
+    if (!billingGroup) {
+      return res.json({
+        success: true,
+        stats: {
+          pending: 0,
+          preparing: 0,
+          ready: 0,
+          totalToday: 0,
+          all: 0,
+          completed: 0,
+        },
+      });
+    }
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const [pendingCount, preparingCount, readyCount, totalToday, allCount, completedCount] = await Promise.all([
+      Order.countDocuments({ 
+        status: { $in: ['pending', 'confirmed'] },
+        billingGroupId: billingGroup._id
+      }),
+      Order.countDocuments({ 
+        status: 'preparing',
+        billingGroupId: billingGroup._id
+      }),
+      Order.countDocuments({ 
+        status: 'ready',
+        billingGroupId: billingGroup._id
+      }),
       Order.countDocuments({
         createdAt: {
-          $gte: new Date(new Date().setHours(0, 0, 0, 0))
-        }
+          $gte: startOfDay
+        },
+        billingGroupId: billingGroup._id
+      }),
+      Order.countDocuments({ 
+        billingGroupId: billingGroup._id
+      }),
+      Order.countDocuments({ 
+        status: 'completed',
+        billingGroupId: billingGroup._id
       }),
     ]);
 
@@ -76,6 +256,8 @@ router.get('/dashboard', async (req, res) => {
         preparing: preparingCount,
         ready: readyCount,
         totalToday,
+        all: allCount,
+        completed: completedCount,
       },
     });
   } catch (error) {

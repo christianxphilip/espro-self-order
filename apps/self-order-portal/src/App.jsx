@@ -6,6 +6,7 @@ import CartPage from './pages/CartPage';
 import ConfirmationPage from './pages/ConfirmationPage';
 import OrderSubmittedPage from './pages/OrderSubmittedPage';
 import OrderHistoryPage from './pages/OrderHistoryPage';
+import HomePage from './pages/HomePage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,7 +28,7 @@ function App() {
           <Route path="/confirm/:tableId" element={<ConfirmationPage />} />
           <Route path="/order-submitted/:orderId" element={<OrderSubmittedPage />} />
           <Route path="/history" element={<OrderHistoryPage />} />
-          <Route path="/" element={<div className="p-8 text-center">ESPRO Self Order - Scan QR Code to Start</div>} />
+          <Route path="/" element={<HomePage />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>

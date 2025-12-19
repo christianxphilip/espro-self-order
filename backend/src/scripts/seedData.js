@@ -63,12 +63,14 @@ const seedData = async () => {
 
         // Generate QR code image
         const frontendUrl = process.env.SELF_ORDER_URL || process.env.FRONTEND_URL || 'http://localhost:8084';
-        const qrCodeUrl = await generateQRCode(
+        const qrCodeData = await generateQRCode(
           table._id.toString(),
           qrCode,
-          frontendUrl
+          tableData.tableNumber,
+          frontendUrl,
+          null // No Bitly link in seed data
         );
-        table.qrCodeUrl = qrCodeUrl;
+        table.qrCodeUrl = qrCodeData.qrCodeUrl;
         await table.save();
       }
       console.log('✅ Sample tables created');

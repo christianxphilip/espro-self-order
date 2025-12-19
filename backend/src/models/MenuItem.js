@@ -41,6 +41,22 @@ const menuItemSchema = new mongoose.Schema({
     type: String,
     trim: true,
   }],
+  // Temperature options: 'hot', 'iced', 'iced-only', 'both' (hot and iced)
+  temperatureOption: {
+    type: String,
+    enum: ['hot', 'iced', 'iced-only', 'both'],
+    default: 'hot',
+  },
+  // Whether this item can have extra espresso shot (+30 pesos)
+  allowExtraEspresso: {
+    type: Boolean,
+    default: false,
+  },
+  // Whether this item can have oat milk substitute (+40 pesos)
+  allowOatMilk: {
+    type: Boolean,
+    default: false,
+  },
 }, {
   timestamps: true,
 });

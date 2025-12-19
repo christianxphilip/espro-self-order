@@ -19,10 +19,10 @@ services:
       dockerfile: Dockerfile
     container_name: espro-self-ordering-backend
     ports:
-      - "6000:6000"
+      - "7001:7001"
     environment:
       - NODE_ENV=production
-      - PORT=6000
+      - PORT=7001
       - MONGO_URI=mongodb://espro-self-ordering-mongodb:27017/espro-self-ordering
       - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
       - JWT_EXPIRE=7d

@@ -39,7 +39,7 @@ const allowedOrigins = [
   process.env.BARISTA_URL || 'http://localhost:5177',
   'http://localhost:5176',
   'http://localhost:5177',
-  'http://localhost:6000',
+  'http://localhost:7001',
   ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim()) : []),
 ].filter(Boolean);
 
@@ -169,7 +169,7 @@ app.use((req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 6000;
+const PORT = process.env.PORT || 7001;
 
 // Start server after MongoDB connection
 async function startServer() {

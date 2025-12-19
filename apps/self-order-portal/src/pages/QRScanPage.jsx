@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { tableAPI } from '../services/api';
+import { tableAPI, settingsAPI } from '../services/api';
 import useCartStore from '../store/cartStore';
 
 export default function QRScanPage() {
@@ -9,21 +9,49 @@ export default function QRScanPage() {
   const navigate = useNavigate();
   const setTableId = useCartStore((state) => state.setTableId);
 
+  // Check for global custom redirect first
+  const { data: settingsData, isLoading: isLoadingSettings } = useQuery({
+    queryKey: ['settings', 'public'],
+    queryFn: () => settingsAPI.getPublic(),
+    retry: false,
+  });
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['table', qrCode],
     queryFn: () => tableAPI.getByQRCode(qrCode),
     retry: false,
+    enabled: !isLoadingSettings && !settingsData?.data?.settings?.customRedirectEnabled, // Only fetch table if custom redirect is not enabled
   });
 
+  // Check for custom redirect on mount
   useEffect(() => {
+    if (!isLoadingSettings && settingsData?.data?.settings?.customRedirectEnabled && settingsData?.data?.settings?.customRedirectUrl) {
+      window.location.href = settingsData.data.settings.customRedirectUrl;
+      return;
+    }
+  }, [settingsData, isLoadingSettings]);
+
+  useEffect(() => {
+    // Only proceed if custom redirect is not enabled
+    if (!isLoadingSettings && settingsData?.data?.settings?.customRedirectEnabled) {
+      return;
+    }
+
     if (data?.data?.success && data?.data?.table) {
       const table = data.data.table;
+      
+      // Check for table-specific custom redirect
+      if (table.customRedirectEnabled && table.customRedirectUrl) {
+        window.location.href = table.customRedirectUrl;
+        return;
+      }
+
       setTableId(table._id);
       navigate(`/order/table/${table._id}`);
     }
-  }, [data, navigate, setTableId]);
+  }, [data, settingsData, isLoadingSettings, navigate, setTableId]);
 
-  if (isLoading) {
+  if (isLoadingSettings || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-espro-cream">
         <div className="text-center">

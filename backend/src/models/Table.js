@@ -17,6 +17,14 @@ const tableSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  bitlyLink: {
+    type: String,
+    trim: true,
+  },
+  bitlyId: {
+    type: String,
+    trim: true,
+  },
   isActive: {
     type: Boolean,
     default: true,
@@ -28,6 +36,15 @@ const tableSchema = new mongoose.Schema({
   billingGroupId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'BillingGroup',
+    default: null,
+  },
+  customRedirectEnabled: {
+    type: Boolean,
+    default: false,
+  },
+  customRedirectUrl: {
+    type: String,
+    trim: true,
     default: null,
   },
 }, {

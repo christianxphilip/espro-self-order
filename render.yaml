@@ -25,6 +25,14 @@ services:
         value: 3000
       - key: CORS_ORIGINS
         value: https://espro-self-order-admin.onrender.com,https://espro-self-order-portal.onrender.com,https://espro-self-order-barista.onrender.com
+      - key: SELF_ORDER_URL
+        value: https://espro-self-order-portal.onrender.com
+      - key: BACKEND_URL
+        value: https://espro-self-order-backend.onrender.com
+      - key: FRONTEND_URL
+        value: https://espro-self-order-portal.onrender.com
+      - key: BARISTA_URL
+        value: https://espro-self-order-barista.onrender.com
       # AWS credentials should be set in Render dashboard as environment variables:
       # - AWS_ACCESS_KEY_ID
       # - AWS_SECRET_ACCESS_KEY
@@ -70,3 +78,4 @@ services:
     envVars:
       - key: VITE_API_URL
         value: https://espro-self-order-backend.onrender.com/api
+

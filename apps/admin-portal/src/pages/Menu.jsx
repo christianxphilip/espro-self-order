@@ -13,6 +13,9 @@ export default function Menu() {
     category: 'Beverages',
     price: '',
     isAvailable: true,
+    temperatureOption: 'hot',
+    allowExtraEspresso: false,
+    allowOatMilk: false,
   });
 
   const { data: menuItems, isLoading } = useQuery({
@@ -66,6 +69,9 @@ export default function Menu() {
       category: item.category,
       price: item.price.toString(),
       isAvailable: item.isAvailable,
+      temperatureOption: item.temperatureOption || 'hot',
+      allowExtraEspresso: item.allowExtraEspresso || false,
+      allowOatMilk: item.allowOatMilk || false,
     });
     setShowModal(true);
   };
@@ -252,6 +258,52 @@ export default function Menu() {
                     className="mr-2"
                   />
                   <label className="text-sm font-medium text-gray-700">Available</label>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Temperature Option
+                  </label>
+                  <select
+                    value={formData.temperatureOption}
+                    onChange={(e) =>
+                      setFormData({ ...formData, temperatureOption: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="hot">Hot Only</option>
+                    <option value="iced">Iced Only</option>
+                    <option value="iced-only">Iced Only (Special)</option>
+                    <option value="both">Both Hot & Iced</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    "Iced Only (Special)" means the item is only available in iced format
+                  </p>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={formData.allowExtraEspresso}
+                    onChange={(e) =>
+                      setFormData({ ...formData, allowExtraEspresso: e.target.checked })
+                    }
+                    className="mr-2"
+                  />
+                  <label className="text-sm font-medium text-gray-700">
+                    Allow Extra Espresso Shot (+₱30)
+                  </label>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={formData.allowOatMilk}
+                    onChange={(e) =>
+                      setFormData({ ...formData, allowOatMilk: e.target.checked })
+                    }
+                    className="mr-2"
+                  />
+                  <label className="text-sm font-medium text-gray-700">
+                    Allow Oat Milk Substitute (+₱40)
+                  </label>
                 </div>
                 <div className="flex space-x-2">
                   <button

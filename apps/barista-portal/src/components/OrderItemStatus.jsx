@@ -1,4 +1,4 @@
-export default function OrderItemStatus({ item, onStatusChange, disabled = false }) {
+export default function OrderItemStatus({ item, onStatusChange, disabled = false, isLoading = false }) {
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending':
@@ -46,10 +46,17 @@ export default function OrderItemStatus({ item, onStatusChange, disabled = false
         {canUpdate && (
           <button
             onClick={() => onStatusChange(getNextStatus(item.status))}
-            disabled={disabled}
-            className="bg-espro-orange text-white px-3 py-1 rounded text-sm font-semibold hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            disabled={disabled || isLoading}
+            className="bg-espro-orange text-white px-3 py-1 rounded text-sm font-semibold hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            Next
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                <span>Updating...</span>
+              </>
+            ) : (
+              'Next'
+            )}
           </button>
         )}
       </div>

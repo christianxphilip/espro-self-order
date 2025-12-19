@@ -17,7 +17,8 @@ export default function Login() {
     },
     onSuccess: (data) => {
       localStorage.setItem('token', data.token);
-      navigate('/');
+      // Force a full page reload to ensure authentication state is properly initialized
+      window.location.href = '/';
     },
     onError: (error) => {
       alert(error.response?.data?.message || 'Login failed');

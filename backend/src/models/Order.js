@@ -29,6 +29,21 @@ const orderItemSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  // Temperature selection: 'hot' or 'iced'
+  temperature: {
+    type: String,
+    enum: ['hot', 'iced'],
+  },
+  // Extra espresso shot (+30 pesos)
+  extraEspresso: {
+    type: Boolean,
+    default: false,
+  },
+  // Oat milk substitute (+40 pesos)
+  oatMilk: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const orderSchema = new mongoose.Schema({

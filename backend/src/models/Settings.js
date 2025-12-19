@@ -19,6 +19,17 @@ const settingsSchema = new mongoose.Schema({
     max: 60000, // Maximum 60 seconds
   },
   
+  // Global QR Code Redirect Settings
+  customRedirectEnabled: {
+    type: Boolean,
+    default: false,
+  },
+  customRedirectUrl: {
+    type: String,
+    trim: true,
+    default: null,
+  },
+  
   // Last updated by
   updatedBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -45,3 +56,4 @@ settingsSchema.statics.getSettings = async function() {
 const Settings = mongoose.model('Settings', settingsSchema);
 
 export default Settings;
+

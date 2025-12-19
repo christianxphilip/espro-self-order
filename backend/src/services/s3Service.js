@@ -34,7 +34,8 @@ export const uploadQRCodeToS3 = async (imageBuffer, fileName) => {
       Key: key,
       Body: imageBuffer,
       ContentType: 'image/png',
-      ACL: 'public-read', // Make QR codes publicly accessible
+      // ACL removed - bucket policy should handle public access
+      // If bucket is not public, configure bucket policy to allow public read access
     });
 
     await s3Client.send(command);
