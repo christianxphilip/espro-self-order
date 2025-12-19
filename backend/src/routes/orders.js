@@ -112,9 +112,21 @@ router.post('/', async (req, res) => {
       // Calculate base price
       let itemPrice = menuItem.price;
       
-      // Add temperature surcharge for iced (+20 pesos)
-      const temperature = item.temperature || 'hot';
-      if (temperature === 'iced') {
+      // Determine temperature - default based on menu item option
+      let temperature = item.temperature;
+      if (!temperature) {
+        // Default based on menu item temperature option
+        if (menuItem.temperatureOption === 'iced-only') {
+          temperature = 'iced';
+        } else if (menuItem.temperatureOption === 'hot') {
+          temperature = 'hot';
+        } else {
+          temperature = 'hot'; // Default fallback
+        }
+      }
+      
+      // Add temperature surcharge for iced (+20 pesos) - but NOT for iced-only items
+      if (temperature === 'iced' && menuItem.temperatureOption !== 'iced-only') {
         itemPrice += 20;
       }
       

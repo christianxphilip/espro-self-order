@@ -68,7 +68,7 @@ export default function ItemCustomizationModal({ item, isOpen, onClose, onAdd })
           {(canSelectHot || canSelectIced) && (
             <div className="mb-4">
               <label className="block text-sm font-semibold text-espro-dark mb-2">
-                Temperature
+                Hot/Cold
               </label>
               <div className="flex gap-2">
                 {canSelectHot && (
