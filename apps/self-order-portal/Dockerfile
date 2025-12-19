@@ -16,9 +16,18 @@ RUN npm run build
 
 FROM nginx:alpine
 
+# Install gettext for envsubst
+RUN apk add --no-cache gettext
+
 COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY start-nginx.sh /start-nginx.sh
+
+RUN chmod +x /start-nginx.sh
 
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+# Default backend URL (can be overridden by environment variable)
+ENV BACKEND_URL=http://espro-self-ordering-backend:7001
+
+CMD ["/start-nginx.sh"]

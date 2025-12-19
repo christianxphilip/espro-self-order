@@ -47,6 +47,8 @@ services:
     container_name: espro-self-ordering-portal
     ports:
       - "8084:80"
+    environment:
+      - BACKEND_URL=http://espro-self-ordering-backend:7001
     depends_on:
       - backend
     networks:
@@ -60,6 +62,8 @@ services:
     container_name: espro-self-ordering-barista-portal
     ports:
       - "8085:80"
+    environment:
+      - BACKEND_URL=http://espro-self-ordering-backend:7001
     depends_on:
       - backend
     networks:
@@ -73,6 +77,8 @@ services:
     container_name: espro-self-ordering-admin-portal
     ports:
       - "8086:80"
+    environment:
+      - BACKEND_URL=http://espro-self-ordering-backend:7001
     depends_on:
       - backend
     networks:
