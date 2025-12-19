@@ -2,7 +2,7 @@ export default function CartItem({ item, onRemove, onUpdateQuantity }) {
   // Build modifiers string
   const modifiers = [];
   if (item.temperature) {
-    modifiers.push(item.temperature === 'iced' ? 'Iced' : 'Hot');
+    modifiers.push(item.temperature === 'iced' ? 'Cold' : 'Hot');
   }
   if (item.extraEspresso) {
     modifiers.push('Extra Espresso');

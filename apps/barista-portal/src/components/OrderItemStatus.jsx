@@ -38,7 +38,7 @@ export default function OrderItemStatus({ item, onStatusChange, disabled = false
   // Build modifiers string
   const modifiers = [];
   if (item.temperature) {
-    modifiers.push(item.temperature === 'iced' ? 'Iced' : 'Hot');
+    modifiers.push(item.temperature === 'iced' ? 'Cold' : 'Hot');
   }
   if (item.extraEspresso) {
     modifiers.push('Extra Espresso');

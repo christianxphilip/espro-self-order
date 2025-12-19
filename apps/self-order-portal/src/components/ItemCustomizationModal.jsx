@@ -1,15 +1,25 @@
 import { useState } from 'react';
 
 export default function ItemCustomizationModal({ item, isOpen, onClose, onAdd }) {
-  const [temperature, setTemperature] = useState('hot');
+  // Determine available temperature options
+  const canSelectHot = item?.temperatureOption === 'hot' || item?.temperatureOption === 'both';
+  const canSelectIced = item?.temperatureOption === 'iced' || item?.temperatureOption === 'iced-only' || item?.temperatureOption === 'both';
+  const isIcedOnly = item?.temperatureOption === 'iced-only';
+  
+  // Set initial temperature based on available options
+  const initialTemperature = isIcedOnly || (!canSelectHot && canSelectIced) ? 'iced' : 'hot';
+  
+  const [temperature, setTemperature] = useState(initialTemperature);
   const [extraEspresso, setExtraEspresso] = useState(false);
   const [oatMilk, setOatMilk] = useState(false);
 
   if (!isOpen || !item) return null;
 
+
   // Calculate price with add-ons
   let itemPrice = item.price;
-  if (temperature === 'iced') {
+  // Only add iced surcharge if it's not iced-only (iced-only has no surcharge)
+  if (temperature === 'iced' && !isIcedOnly) {
     itemPrice += 20; // Iced surcharge
   }
   if (extraEspresso && item.allowExtraEspresso) {
@@ -18,10 +28,6 @@ export default function ItemCustomizationModal({ item, isOpen, onClose, onAdd })
   if (oatMilk && item.allowOatMilk) {
     itemPrice += 40; // Oat milk
   }
-
-  // Determine available temperature options
-  const canSelectHot = item.temperatureOption === 'hot' || item.temperatureOption === 'both';
-  const canSelectIced = item.temperatureOption === 'iced' || item.temperatureOption === 'iced-only' || item.temperatureOption === 'both';
 
   const handleAdd = () => {
     onAdd({
@@ -34,7 +40,7 @@ export default function ItemCustomizationModal({ item, isOpen, onClose, onAdd })
       oatMilk: oatMilk && item.allowOatMilk,
     });
     // Reset form
-    setTemperature('hot');
+    setTemperature(initialTemperature);
     setExtraEspresso(false);
     setOatMilk(false);
     onClose();
@@ -86,7 +92,7 @@ export default function ItemCustomizationModal({ item, isOpen, onClose, onAdd })
                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                     }`}
                   >
-                    Iced (+₱20)
+                    {isIcedOnly ? 'Cold' : 'Cold (+₱20)'}
                   </button>
                 )}
               </div>
