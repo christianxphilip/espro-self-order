@@ -29,11 +29,30 @@ export default function OrderItemStatus({ item, onStatusChange, disabled = false
 
   const canUpdate = item.status !== 'delivered';
 
+  // Get category from populated menuItemId or default to empty string
+  const category = item.menuItemId?.category || '';
+  
+  // Determine if item is a beverage (for barista) or food/snack/dessert (for kitchen)
+  const isBeverage = category && ['Beverages', 'beverages', 'Beverage', 'beverage'].includes(category);
+  
+  // Build modifiers string
+  const modifiers = [];
+  if (item.temperature) {
+    modifiers.push(item.temperature === 'iced' ? 'Iced' : 'Hot');
+  }
+  if (item.extraEspresso) {
+    modifiers.push('Extra Espresso');
+  }
+  if (item.oatMilk) {
+    modifiers.push('Oat Milk');
+  }
+  const modifiersText = modifiers.length > 0 ? ` (${modifiers.join(', ')})` : '';
+
   return (
     <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
       <div className="flex-1">
         <p className="font-semibold text-espro-dark">
-          {item.name} × {item.quantity}
+          {item.name} × {item.quantity}{modifiersText}
         </p>
         <p className="text-sm text-gray-600">
           ₱{item.price.toFixed(2)} each • ₱{(item.price * item.quantity).toFixed(2)} total

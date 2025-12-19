@@ -33,6 +33,7 @@ router.get('/orders/pending', async (req, res) => {
       billingGroupId: billingGroup._id
     })
       .populate('tableId', 'tableNumber location')
+      .populate('items.menuItemId', 'category')
       .sort({ createdAt: 1 });
     
     res.json({
@@ -80,6 +81,7 @@ router.get('/orders/active', async (req, res) => {
     
     const orders = await Order.find(query)
       .populate('tableId', 'tableNumber location')
+      .populate('items.menuItemId', 'category')
       .sort({ createdAt: 1 });
     
     res.json({
@@ -118,6 +120,7 @@ router.get('/orders/today', async (req, res) => {
       billingGroupId: billingGroup._id
     })
       .populate('tableId', 'tableNumber location')
+      .populate('items.menuItemId', 'category')
       .sort({ createdAt: -1 });
     
     res.json({
@@ -150,6 +153,7 @@ router.get('/orders/all', async (req, res) => {
       billingGroupId: billingGroup._id
     })
       .populate('tableId', 'tableNumber location')
+      .populate('items.menuItemId', 'category')
       .sort({ createdAt: -1 });
     
     res.json({
@@ -183,6 +187,7 @@ router.get('/orders/completed', async (req, res) => {
       billingGroupId: billingGroup._id
     })
       .populate('tableId', 'tableNumber location')
+      .populate('items.menuItemId', 'category')
       .sort({ createdAt: -1 });
     
     res.json({

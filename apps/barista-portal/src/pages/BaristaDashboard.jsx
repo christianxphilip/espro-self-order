@@ -81,24 +81,34 @@ export default function BaristaDashboard() {
     },
   });
 
-  const [startingOrderId, setStartingOrderId] = useState(null);
-  const [completingOrderId, setCompletingOrderId] = useState(null);
-  const [dispatchingOrderId, setDispatchingOrderId] = useState(null);
+  // Use Sets to track multiple orders being processed simultaneously
+  const [startingOrderIds, setStartingOrderIds] = useState(new Set());
+  const [completingOrderIds, setCompletingOrderIds] = useState(new Set());
+  const [dispatchingOrderIds, setDispatchingOrderIds] = useState(new Set());
 
   const startOrderMutation = useMutation({
     mutationFn: (orderId) => baristaAPI.startOrder(orderId),
     onMutate: (orderId) => {
-      setStartingOrderId(orderId);
+      setStartingOrderIds(prev => new Set(prev).add(orderId));
       setUpdatingOrderId(orderId);
     },
-    onSuccess: () => {
+    onSuccess: (data, orderId) => {
+      // Remove this specific order from loading state
+      setStartingOrderIds(prev => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
+      });
+      setUpdatingOrderId(null);
       queryClient.invalidateQueries(['barista', 'orders']);
       queryClient.invalidateQueries(['barista', 'dashboard']);
-      setStartingOrderId(null);
-      setUpdatingOrderId(null);
     },
-    onError: () => {
-      setStartingOrderId(null);
+    onError: (error, orderId) => {
+      setStartingOrderIds(prev => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
+      });
       setUpdatingOrderId(null);
     },
   });
@@ -106,17 +116,26 @@ export default function BaristaDashboard() {
   const completeOrderMutation = useMutation({
     mutationFn: (orderId) => baristaAPI.completeOrder(orderId),
     onMutate: (orderId) => {
-      setCompletingOrderId(orderId);
+      setCompletingOrderIds(prev => new Set(prev).add(orderId));
       setUpdatingOrderId(orderId);
     },
-    onSuccess: () => {
+    onSuccess: (data, orderId) => {
+      // Remove this specific order from loading state
+      setCompletingOrderIds(prev => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
+      });
+      setUpdatingOrderId(null);
       queryClient.invalidateQueries(['barista', 'orders']);
       queryClient.invalidateQueries(['barista', 'dashboard']);
-      setCompletingOrderId(null);
-      setUpdatingOrderId(null);
     },
-    onError: () => {
-      setCompletingOrderId(null);
+    onError: (error, orderId) => {
+      setCompletingOrderIds(prev => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
+      });
       setUpdatingOrderId(null);
     },
   });
@@ -124,17 +143,26 @@ export default function BaristaDashboard() {
   const dispatchOrderMutation = useMutation({
     mutationFn: (orderId) => baristaAPI.dispatchOrder(orderId),
     onMutate: (orderId) => {
-      setDispatchingOrderId(orderId);
+      setDispatchingOrderIds(prev => new Set(prev).add(orderId));
       setUpdatingOrderId(orderId);
     },
-    onSuccess: () => {
+    onSuccess: (data, orderId) => {
+      // Remove this specific order from loading state
+      setDispatchingOrderIds(prev => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
+      });
+      setUpdatingOrderId(null);
       queryClient.invalidateQueries(['barista', 'orders']);
       queryClient.invalidateQueries(['barista', 'dashboard']);
-      setDispatchingOrderId(null);
-      setUpdatingOrderId(null);
     },
-    onError: () => {
-      setDispatchingOrderId(null);
+    onError: (error, orderId) => {
+      setDispatchingOrderIds(prev => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
+      });
       setUpdatingOrderId(null);
     },
   });
@@ -223,9 +251,9 @@ export default function BaristaDashboard() {
                   onDispatchOrder={handleDispatchOrder}
                   isUpdatingItem={updatingItemId?.startsWith(`${order._id}-`)}
                   isUpdatingOrder={updatingOrderId === order._id}
-                  isStartingOrder={startingOrderId === order._id}
-                  isCompletingOrder={completingOrderId === order._id}
-                  isDispatchingOrder={dispatchingOrderId === order._id}
+                  isStartingOrder={startingOrderIds.has(order._id)}
+                  isCompletingOrder={completingOrderIds.has(order._id)}
+                  isDispatchingOrder={dispatchingOrderIds.has(order._id)}
                 />
               ))}
             </div>

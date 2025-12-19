@@ -88,20 +88,66 @@ export default function OrderCard({
       {/* Expanded Content */}
       {isExpanded && (
         <div className="border-t pt-4 px-4 pb-4 space-y-4">
-          {/* Order Items */}
+          {/* Order Items - Separated by Kitchen and Barista */}
           <div>
             <h4 className="font-semibold text-espro-dark mb-3">Order Items</h4>
-            <div className="space-y-2">
-              {order.items.map((item) => (
-                <OrderItemStatus
-                  key={item._id}
-                  item={item}
-                  onStatusChange={(status) => handleItemStatusChange(item._id, status)}
-                  disabled={isUpdatingItem}
-                  isLoading={isUpdatingItem}
-                />
-              ))}
-            </div>
+            
+            {/* Separate items into Kitchen and Barista */}
+            {(() => {
+              const kitchenItems = order.items.filter(item => {
+                const category = item.menuItemId?.category || '';
+                return category && !['Beverages', 'beverages', 'Beverage', 'beverage'].includes(category);
+              });
+              
+              const baristaItems = order.items.filter(item => {
+                const category = item.menuItemId?.category || '';
+                return category && ['Beverages', 'beverages', 'Beverage', 'beverage'].includes(category);
+              });
+              
+              return (
+                <div className="space-y-4">
+                  {/* Kitchen Section */}
+                  {kitchenItems.length > 0 && (
+                    <div>
+                      <h5 className="text-sm font-semibold text-espro-orange mb-2 uppercase tracking-wide">
+                        🍽️ Kitchen
+                      </h5>
+                      <div className="space-y-2">
+                        {kitchenItems.map((item) => (
+                          <OrderItemStatus
+                            key={item._id}
+                            item={item}
+                            onStatusChange={(status) => handleItemStatusChange(item._id, status)}
+                            disabled={isUpdatingItem}
+                            isLoading={isUpdatingItem}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Barista Section */}
+                  {baristaItems.length > 0 && (
+                    <div>
+                      <h5 className="text-sm font-semibold text-blue-600 mb-2 uppercase tracking-wide">
+                        ☕ Barista
+                      </h5>
+                      <div className="space-y-2">
+                        {baristaItems.map((item) => (
+                          <OrderItemStatus
+                            key={item._id}
+                            item={item}
+                            onStatusChange={(status) => handleItemStatusChange(item._id, status)}
+                            disabled={isUpdatingItem}
+                            isLoading={isUpdatingItem}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Order Status Actions */}
