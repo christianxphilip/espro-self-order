@@ -81,17 +81,24 @@ export default function BaristaDashboard() {
     },
   });
 
+  const [startingOrderId, setStartingOrderId] = useState(null);
+  const [completingOrderId, setCompletingOrderId] = useState(null);
+  const [dispatchingOrderId, setDispatchingOrderId] = useState(null);
+
   const startOrderMutation = useMutation({
     mutationFn: (orderId) => baristaAPI.startOrder(orderId),
     onMutate: (orderId) => {
+      setStartingOrderId(orderId);
       setUpdatingOrderId(orderId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['barista', 'orders']);
       queryClient.invalidateQueries(['barista', 'dashboard']);
+      setStartingOrderId(null);
       setUpdatingOrderId(null);
     },
     onError: () => {
+      setStartingOrderId(null);
       setUpdatingOrderId(null);
     },
   });
@@ -99,14 +106,17 @@ export default function BaristaDashboard() {
   const completeOrderMutation = useMutation({
     mutationFn: (orderId) => baristaAPI.completeOrder(orderId),
     onMutate: (orderId) => {
+      setCompletingOrderId(orderId);
       setUpdatingOrderId(orderId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['barista', 'orders']);
       queryClient.invalidateQueries(['barista', 'dashboard']);
+      setCompletingOrderId(null);
       setUpdatingOrderId(null);
     },
     onError: () => {
+      setCompletingOrderId(null);
       setUpdatingOrderId(null);
     },
   });
@@ -114,14 +124,17 @@ export default function BaristaDashboard() {
   const dispatchOrderMutation = useMutation({
     mutationFn: (orderId) => baristaAPI.dispatchOrder(orderId),
     onMutate: (orderId) => {
+      setDispatchingOrderId(orderId);
       setUpdatingOrderId(orderId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['barista', 'orders']);
       queryClient.invalidateQueries(['barista', 'dashboard']);
+      setDispatchingOrderId(null);
       setUpdatingOrderId(null);
     },
     onError: () => {
+      setDispatchingOrderId(null);
       setUpdatingOrderId(null);
     },
   });
@@ -210,9 +223,9 @@ export default function BaristaDashboard() {
                   onDispatchOrder={handleDispatchOrder}
                   isUpdatingItem={updatingItemId?.startsWith(`${order._id}-`)}
                   isUpdatingOrder={updatingOrderId === order._id}
-                  isStartingOrder={startOrderMutation.isLoading && startOrderMutation.variables === order._id}
-                  isCompletingOrder={completeOrderMutation.isLoading && completeOrderMutation.variables === order._id}
-                  isDispatchingOrder={dispatchOrderMutation.isLoading && dispatchOrderMutation.variables === order._id}
+                  isStartingOrder={startingOrderId === order._id}
+                  isCompletingOrder={completingOrderId === order._id}
+                  isDispatchingOrder={dispatchingOrderId === order._id}
                 />
               ))}
             </div>

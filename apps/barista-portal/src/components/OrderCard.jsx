@@ -112,13 +112,19 @@ export default function OrderCard({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (onStartOrder) {
+                    if (onStartOrder && !isStartingOrder) {
                       onStartOrder(order._id);
                     }
                   }}
                   disabled={isStartingOrder}
-                  className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-w-[140px]"
                 >
+                  {isStartingOrder && (
+                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
                   {isStartingOrder ? 'Starting...' : 'Start Preparing'}
                 </button>
               )}
@@ -127,13 +133,19 @@ export default function OrderCard({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (onCompleteOrder) {
+                    if (onCompleteOrder && !isCompletingOrder) {
                       onCompleteOrder(order._id);
                     }
                   }}
                   disabled={isCompletingOrder}
-                  className="bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  className="bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-w-[140px]"
                 >
+                  {isCompletingOrder && (
+                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
                   {isCompletingOrder ? 'Completing...' : 'Mark as Ready'}
                 </button>
               )}
@@ -142,13 +154,19 @@ export default function OrderCard({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (onDispatchOrder) {
+                    if (onDispatchOrder && !isDispatchingOrder) {
                       onDispatchOrder(order._id);
                     }
                   }}
                   disabled={isDispatchingOrder}
-                  className="bg-espro-orange text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  className="bg-espro-orange text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-w-[140px]"
                 >
+                  {isDispatchingOrder && (
+                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
                   {isDispatchingOrder ? 'Dispatching...' : 'Mark as Delivered'}
                 </button>
               )}
