@@ -9,14 +9,22 @@ const useCartStore = create(
       customerName: '',
       
       addItem: (item) => set((state) => {
+        // Check if item with same menuItemId AND same customizations exists
         const existingItem = state.items.find(
-          (i) => i.menuItemId === item.menuItemId
+          (i) => 
+            i.menuItemId === item.menuItemId &&
+            i.temperature === (item.temperature || undefined) &&
+            i.extraEspresso === (item.extraEspresso || false) &&
+            i.oatMilk === (item.oatMilk || false)
         );
         
         if (existingItem) {
           return {
             items: state.items.map((i) =>
-              i.menuItemId === item.menuItemId
+              i.menuItemId === item.menuItemId &&
+              i.temperature === (item.temperature || undefined) &&
+              i.extraEspresso === (item.extraEspresso || false) &&
+              i.oatMilk === (item.oatMilk || false)
                 ? { ...i, quantity: i.quantity + (item.quantity || 1) }
                 : i
             ),
@@ -28,16 +36,43 @@ const useCartStore = create(
         };
       }),
       
-      removeItem: (menuItemId) => set((state) => ({
-        items: state.items.filter((item) => item.menuItemId !== menuItemId),
-      })),
+      removeItem: (itemToRemove) => set((state) => {
+        // Remove item by matching all properties (including customizations)
+        return {
+          items: state.items.filter((item) => {
+            // If itemToRemove is an object with full item data, match all fields
+            if (typeof itemToRemove === 'object' && itemToRemove.menuItemId) {
+              return !(
+                item.menuItemId === itemToRemove.menuItemId &&
+                item.temperature === (itemToRemove.temperature || undefined) &&
+                item.extraEspresso === (itemToRemove.extraEspresso || false) &&
+                item.oatMilk === (itemToRemove.oatMilk || false)
+              );
+            }
+            // If itemToRemove is just menuItemId (backward compatibility), match by ID only
+            return item.menuItemId !== itemToRemove;
+          }),
+        };
+      }),
       
-      updateQuantity: (menuItemId, quantity) => set((state) => ({
-        items: state.items.map((item) =>
-          item.menuItemId === menuItemId
-            ? { ...item, quantity: Math.max(1, quantity) }
-            : item
-        ),
+      updateQuantity: (itemToUpdate, quantity) => set((state) => ({
+        items: state.items.map((item) => {
+          // If itemToUpdate is an object with full item data, match all fields
+          if (typeof itemToUpdate === 'object' && itemToUpdate.menuItemId) {
+            if (
+              item.menuItemId === itemToUpdate.menuItemId &&
+              item.temperature === (itemToUpdate.temperature || undefined) &&
+              item.extraEspresso === (itemToUpdate.extraEspresso || false) &&
+              item.oatMilk === (itemToUpdate.oatMilk || false)
+            ) {
+              return { ...item, quantity: Math.max(1, quantity) };
+            }
+          } else if (item.menuItemId === itemToUpdate) {
+            // Backward compatibility: if itemToUpdate is just menuItemId
+            return { ...item, quantity: Math.max(1, quantity) };
+          }
+          return item;
+        }),
       })),
       
       setTableId: (tableId) => set({ tableId }),

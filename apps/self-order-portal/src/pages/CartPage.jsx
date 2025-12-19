@@ -52,12 +52,12 @@ export default function CartPage() {
 
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="space-y-4 mb-6">
-          {items.map((item) => (
+          {items.map((item, index) => (
             <CartItem
-              key={item.menuItemId}
+              key={`${item.menuItemId}-${item.temperature || 'default'}-${item.extraEspresso || false}-${item.oatMilk || false}-${index}`}
               item={item}
-              onRemove={() => removeItem(item.menuItemId)}
-              onUpdateQuantity={(quantity) => updateQuantity(item.menuItemId, quantity)}
+              onRemove={() => removeItem(item)}
+              onUpdateQuantity={(quantity) => updateQuantity(item, quantity)}
             />
           ))}
         </div>

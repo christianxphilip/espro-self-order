@@ -1,9 +1,24 @@
 export default function CartItem({ item, onRemove, onUpdateQuantity }) {
+  // Build modifiers string
+  const modifiers = [];
+  if (item.temperature) {
+    modifiers.push(item.temperature === 'iced' ? 'Iced' : 'Hot');
+  }
+  if (item.extraEspresso) {
+    modifiers.push('Extra Espresso');
+  }
+  if (item.oatMilk) {
+    modifiers.push('Oat Milk');
+  }
+  const modifiersText = modifiers.length > 0 ? ` (${modifiers.join(', ')})` : '';
+
   return (
     <div className="bg-white rounded-lg shadow-md p-4">
       <div className="flex justify-between items-start">
         <div className="flex-1">
-          <h3 className="font-semibold text-espro-dark">{item.name}</h3>
+          <h3 className="font-semibold text-espro-dark">
+            {item.name}{modifiersText}
+          </h3>
           <p className="text-espro-orange font-bold">₱{item.price.toFixed(2)}</p>
         </div>
         <div className="flex items-center gap-3">
