@@ -1,25 +1,45 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function ItemCustomizationModal({ item, isOpen, onClose, onAdd }) {
-  // Determine available temperature options
-  const canSelectHot = item?.temperatureOption === 'hot' || item?.temperatureOption === 'both';
-  const canSelectIced = item?.temperatureOption === 'iced' || item?.temperatureOption === 'iced-only' || item?.temperatureOption === 'both';
-  const isIcedOnly = item?.temperatureOption === 'iced-only';
-  
+  // Only beverages should have customization options
+  const isBeverage = item?.category && ['Beverages', 'beverages', 'Beverage', 'beverage'].includes(item.category);
+
+  // Determine available temperature options (only for beverages)
+  const canSelectHot = isBeverage && (item?.temperatureOption === 'hot' || item?.temperatureOption === 'both');
+  const canSelectIced = isBeverage && (item?.temperatureOption === 'iced' || item?.temperatureOption === 'iced-only' || item?.temperatureOption === 'both');
+  // Items that are iced-only or iced (no hot option) should not have surcharge
+  const isIcedOnly = item?.temperatureOption === 'iced-only' || item?.temperatureOption === 'iced';
+
   // Set initial temperature based on available options
-  const initialTemperature = isIcedOnly || (!canSelectHot && canSelectIced) ? 'iced' : 'hot';
-  
-  const [temperature, setTemperature] = useState(initialTemperature);
+  const getInitialTemperature = () => {
+    if (isIcedOnly || (!canSelectHot && canSelectIced)) {
+      return 'iced';
+    }
+    return 'hot';
+  };
+
+  const [temperature, setTemperature] = useState(getInitialTemperature());
   const [extraEspresso, setExtraEspresso] = useState(false);
   const [oatMilk, setOatMilk] = useState(false);
+
+  // Reset state when item changes or modal opens
+  useEffect(() => {
+    if (isOpen && item) {
+      const initialTemp = getInitialTemperature();
+      setTemperature(initialTemp);
+      setExtraEspresso(false);
+      setOatMilk(false);
+    }
+  }, [isOpen, item?._id, isIcedOnly, canSelectHot, canSelectIced]);
 
   if (!isOpen || !item) return null;
 
 
   // Calculate price with add-ons
   let itemPrice = item.price;
-  // Only add iced surcharge if it's not iced-only (iced-only has no surcharge)
-  if (temperature === 'iced' && !isIcedOnly) {
+  // Only add iced surcharge if it's not iced-only or iced (these have no surcharge)
+  // The surcharge only applies when user selects iced from a 'both' option
+  if (temperature === 'iced' && item?.temperatureOption !== 'iced-only' && item?.temperatureOption !== 'iced') {
     itemPrice += 20; // Iced surcharge
   }
   if (extraEspresso && item.allowExtraEspresso) {
@@ -40,7 +60,7 @@ export default function ItemCustomizationModal({ item, isOpen, onClose, onAdd })
       oatMilk: oatMilk && item.allowOatMilk,
     });
     // Reset form
-    setTemperature(initialTemperature);
+    setTemperature(getInitialTemperature());
     setExtraEspresso(false);
     setOatMilk(false);
     onClose();
@@ -74,11 +94,10 @@ export default function ItemCustomizationModal({ item, isOpen, onClose, onAdd })
                 {canSelectHot && (
                   <button
                     onClick={() => setTemperature('hot')}
-                    className={`flex-1 px-4 py-2 rounded-lg font-semibold transition ${
-                      temperature === 'hot'
-                        ? 'bg-espro-orange text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
+                    className={`flex-1 px-4 py-2 rounded-lg font-semibold transition ${temperature === 'hot'
+                      ? 'bg-espro-orange text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
                   >
                     Hot
                   </button>
@@ -86,13 +105,12 @@ export default function ItemCustomizationModal({ item, isOpen, onClose, onAdd })
                 {canSelectIced && (
                   <button
                     onClick={() => setTemperature('iced')}
-                    className={`flex-1 px-4 py-2 rounded-lg font-semibold transition ${
-                      temperature === 'iced'
-                        ? 'bg-espro-orange text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
+                    className={`flex-1 px-4 py-2 rounded-lg font-semibold transition ${temperature === 'iced'
+                      ? 'bg-espro-orange text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
                   >
-                    {isIcedOnly ? 'Cold' : 'Cold (+₱20)'}
+                    {(item.temperatureOption === 'iced-only' || item.temperatureOption === 'iced') ? 'Cold' : 'Cold (+₱20)'}
                   </button>
                 )}
               </div>
@@ -100,7 +118,7 @@ export default function ItemCustomizationModal({ item, isOpen, onClose, onAdd })
           )}
 
           {/* Extra Espresso Option */}
-          {item.allowExtraEspresso && (
+          {isBeverage && item.allowExtraEspresso && (
             <div className="mb-4">
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
@@ -117,7 +135,7 @@ export default function ItemCustomizationModal({ item, isOpen, onClose, onAdd })
           )}
 
           {/* Oat Milk Option */}
-          {item.allowOatMilk && (
+          {isBeverage && item.allowOatMilk && (
             <div className="mb-4">
               <label className="flex items-center gap-3 cursor-pointer">
                 <input

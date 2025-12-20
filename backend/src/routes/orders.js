@@ -116,7 +116,7 @@ router.post('/', async (req, res) => {
       let temperature = item.temperature;
       if (!temperature) {
         // Default based on menu item temperature option
-        if (menuItem.temperatureOption === 'iced-only') {
+        if (menuItem.temperatureOption === 'iced-only' || menuItem.temperatureOption === 'iced') {
           temperature = 'iced';
         } else if (menuItem.temperatureOption === 'hot') {
           temperature = 'hot';
@@ -125,8 +125,9 @@ router.post('/', async (req, res) => {
         }
       }
       
-      // Add temperature surcharge for iced (+20 pesos) - but NOT for iced-only items
-      if (temperature === 'iced' && menuItem.temperatureOption !== 'iced-only') {
+      // Add temperature surcharge for iced (+20 pesos) - but NOT for iced-only or iced items
+      // The surcharge only applies when user selects iced from a 'both' option
+      if (temperature === 'iced' && menuItem.temperatureOption !== 'iced-only' && menuItem.temperatureOption !== 'iced') {
         itemPrice += 20;
       }
       
@@ -141,7 +142,7 @@ router.post('/', async (req, res) => {
       }
       
       // Validate temperature option
-      if (menuItem.temperatureOption === 'iced-only' && temperature !== 'iced') {
+      if ((menuItem.temperatureOption === 'iced-only' || menuItem.temperatureOption === 'iced') && temperature !== 'iced') {
         return res.status(400).json({
           success: false,
           message: `${menuItem.name} is only available in iced`,

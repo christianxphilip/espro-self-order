@@ -89,6 +89,9 @@ export default function ConfirmationPage() {
       items: items.map((item) => ({
         menuItemId: item.menuItemId,
         quantity: item.quantity,
+        temperature: item.temperature,
+        extraEspresso: item.extraEspresso || false,
+        oatMilk: item.oatMilk || false,
       })),
       orderType: 'dine-in',
       requestId: currentRequestId, // Include requestId for idempotency
@@ -110,14 +113,29 @@ export default function ConfirmationPage() {
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-lg font-semibold text-espro-dark mb-4">Order Summary</h2>
           <div className="space-y-3 mb-4">
-            {items.map((item) => (
-              <div key={item.menuItemId} className="flex justify-between">
-                <span className="text-gray-700">
-                  {item.name} × {item.quantity}
-                </span>
-                <span className="font-semibold">₱{(item.price * item.quantity).toFixed(2)}</span>
-              </div>
-            ))}
+            {items.map((item, index) => {
+              // Build modifiers string for display
+              const modifiers = [];
+              if (item.temperature) {
+                modifiers.push(item.temperature === 'iced' ? 'Cold' : 'Hot');
+              }
+              if (item.extraEspresso) {
+                modifiers.push('Extra Espresso');
+              }
+              if (item.oatMilk) {
+                modifiers.push('Oat Milk');
+              }
+              const modifiersText = modifiers.length > 0 ? ` (${modifiers.join(', ')})` : '';
+              
+              return (
+                <div key={`${item.menuItemId}-${index}`} className="flex justify-between">
+                  <span className="text-gray-700">
+                    {item.name}{modifiersText} × {item.quantity}
+                  </span>
+                  <span className="font-semibold">₱{(item.price * item.quantity).toFixed(2)}</span>
+                </div>
+              );
+            })}
           </div>
           <div className="border-t pt-3 flex justify-between items-center">
             <span className="text-lg font-semibold text-espro-dark">Total</span>

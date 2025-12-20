@@ -20,7 +20,7 @@ const getActiveBillingGroup = async () => {
 router.get('/orders/pending', async (req, res) => {
   try {
     const billingGroup = await getActiveBillingGroup();
-    
+
     if (!billingGroup) {
       return res.json({
         success: true,
@@ -35,7 +35,7 @@ router.get('/orders/pending', async (req, res) => {
       .populate('tableId', 'tableNumber location')
       .populate('items.menuItemId', 'category')
       .sort({ createdAt: 1 });
-    
+
     res.json({
       success: true,
       orders,
@@ -55,7 +55,7 @@ router.get('/orders/pending', async (req, res) => {
 router.get('/orders/active', async (req, res) => {
   try {
     const billingGroup = await getActiveBillingGroup();
-    
+
     if (!billingGroup) {
       return res.json({
         success: true,
@@ -64,12 +64,12 @@ router.get('/orders/active', async (req, res) => {
     }
 
     const { status } = req.query;
-    
+
     let query = {
       status: { $in: ['pending', 'confirmed', 'preparing', 'ready'] },
       billingGroupId: billingGroup._id
     };
-    
+
     // Filter by specific status if provided
     if (status === 'pending') {
       query.status = { $in: ['pending', 'confirmed'] };
@@ -78,12 +78,12 @@ router.get('/orders/active', async (req, res) => {
     } else if (status === 'ready') {
       query.status = 'ready';
     }
-    
+
     const orders = await Order.find(query)
       .populate('tableId', 'tableNumber location')
       .populate('items.menuItemId', 'category')
       .sort({ createdAt: 1 });
-    
+
     res.json({
       success: true,
       orders,
@@ -102,7 +102,7 @@ router.get('/orders/active', async (req, res) => {
 router.get('/orders/today', async (req, res) => {
   try {
     const billingGroup = await getActiveBillingGroup();
-    
+
     if (!billingGroup) {
       return res.json({
         success: true,
@@ -112,7 +112,7 @@ router.get('/orders/today', async (req, res) => {
 
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
-    
+
     const orders = await Order.find({
       createdAt: {
         $gte: startOfDay
@@ -122,7 +122,7 @@ router.get('/orders/today', async (req, res) => {
       .populate('tableId', 'tableNumber location')
       .populate('items.menuItemId', 'category')
       .sort({ createdAt: -1 });
-    
+
     res.json({
       success: true,
       orders,
@@ -141,7 +141,7 @@ router.get('/orders/today', async (req, res) => {
 router.get('/orders/all', async (req, res) => {
   try {
     const billingGroup = await getActiveBillingGroup();
-    
+
     if (!billingGroup) {
       return res.json({
         success: true,
@@ -155,7 +155,7 @@ router.get('/orders/all', async (req, res) => {
       .populate('tableId', 'tableNumber location')
       .populate('items.menuItemId', 'category')
       .sort({ createdAt: -1 });
-    
+
     res.json({
       success: true,
       orders,
@@ -174,7 +174,7 @@ router.get('/orders/all', async (req, res) => {
 router.get('/orders/completed', async (req, res) => {
   try {
     const billingGroup = await getActiveBillingGroup();
-    
+
     if (!billingGroup) {
       return res.json({
         success: true,
@@ -189,7 +189,7 @@ router.get('/orders/completed', async (req, res) => {
       .populate('tableId', 'tableNumber location')
       .populate('items.menuItemId', 'category')
       .sort({ createdAt: -1 });
-    
+
     res.json({
       success: true,
       orders,
@@ -208,7 +208,7 @@ router.get('/orders/completed', async (req, res) => {
 router.get('/dashboard', async (req, res) => {
   try {
     const billingGroup = await getActiveBillingGroup();
-    
+
     if (!billingGroup) {
       return res.json({
         success: true,
@@ -227,15 +227,15 @@ router.get('/dashboard', async (req, res) => {
     startOfDay.setHours(0, 0, 0, 0);
 
     const [pendingCount, preparingCount, readyCount, totalToday, allCount, completedCount] = await Promise.all([
-      Order.countDocuments({ 
+      Order.countDocuments({
         status: { $in: ['pending', 'confirmed'] },
         billingGroupId: billingGroup._id
       }),
-      Order.countDocuments({ 
+      Order.countDocuments({
         status: 'preparing',
         billingGroupId: billingGroup._id
       }),
-      Order.countDocuments({ 
+      Order.countDocuments({
         status: 'ready',
         billingGroupId: billingGroup._id
       }),
@@ -245,10 +245,10 @@ router.get('/dashboard', async (req, res) => {
         },
         billingGroupId: billingGroup._id
       }),
-      Order.countDocuments({ 
+      Order.countDocuments({
         billingGroupId: billingGroup._id
       }),
-      Order.countDocuments({ 
+      Order.countDocuments({
         status: 'completed',
         billingGroupId: billingGroup._id
       }),
@@ -279,7 +279,7 @@ router.get('/dashboard', async (req, res) => {
 router.put('/orders/:id/start', async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
-    
+
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -309,7 +309,7 @@ router.put('/orders/:id/start', async (req, res) => {
 router.put('/orders/:id/complete', async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
-    
+
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -317,7 +317,14 @@ router.put('/orders/:id/complete', async (req, res) => {
       });
     }
 
+    // Update order status
     order.status = 'ready';
+
+    // Update all items to ready status
+    order.items.forEach(item => {
+      item.status = 'ready';
+    });
+
     await order.save();
 
     res.json({
@@ -338,7 +345,7 @@ router.put('/orders/:id/complete', async (req, res) => {
 router.put('/orders/:id/dispatch', async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
-    
+
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -346,8 +353,15 @@ router.put('/orders/:id/dispatch', async (req, res) => {
       });
     }
 
+    // Update order status
     order.status = 'completed';
     order.completedAt = new Date();
+
+    // Update all items to delivered status (items use 'delivered', order uses 'completed')
+    order.items.forEach(item => {
+      item.status = 'delivered';
+    });
+
     await order.save();
 
     res.json({
@@ -368,7 +382,7 @@ router.put('/orders/:id/dispatch', async (req, res) => {
 router.put('/orders/:id/cancel', async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
-    
+
     if (!order) {
       return res.status(404).json({
         success: false,

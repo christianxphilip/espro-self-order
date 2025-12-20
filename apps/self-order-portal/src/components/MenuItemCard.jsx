@@ -5,10 +5,13 @@ export default function MenuItemCard({ item, onAddItem }) {
   const [showModal, setShowModal] = useState(false);
 
   // Check if item has any customization options
-  const hasCustomization = 
+  // Only beverages should have customization options
+  const isBeverage = item.category && ['Beverages', 'beverages', 'Beverage', 'beverage'].includes(item.category);
+  const hasCustomization = isBeverage && (
     (item.temperatureOption && item.temperatureOption !== 'hot') ||
     item.allowExtraEspresso ||
-    item.allowOatMilk;
+    item.allowOatMilk
+  );
 
   const handleAdd = () => {
     if (hasCustomization) {
