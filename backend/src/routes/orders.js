@@ -40,7 +40,7 @@ router.post('/', async (req, res) => {
 
     const table = await Table.findById(tableId);
     console.log('[Orders] Table lookup result:', table ? { id: table._id, number: table.tableNumber, isActive: table.isActive } : 'Not found');
-    
+
     if (!table) {
       return res.status(400).json({
         success: false,
@@ -92,7 +92,7 @@ router.post('/', async (req, res) => {
 
     for (const item of items) {
       const menuItem = await MenuItem.findById(item.menuItemId);
-      
+
       if (!menuItem) {
         return res.status(400).json({
           success: false,
@@ -108,10 +108,10 @@ router.post('/', async (req, res) => {
       }
 
       const quantity = item.quantity || 1;
-      
+
       // Calculate base price
       let itemPrice = menuItem.price;
-      
+
       // Determine temperature - default based on menu item option
       let temperature = item.temperature;
       if (!temperature) {
@@ -124,23 +124,23 @@ router.post('/', async (req, res) => {
           temperature = 'hot'; // Default fallback
         }
       }
-      
+
       // Add temperature surcharge for iced (+20 pesos) - but NOT for iced-only or iced items
       // The surcharge only applies when user selects iced from a 'both' option
       if (temperature === 'iced' && menuItem.temperatureOption !== 'iced-only' && menuItem.temperatureOption !== 'iced') {
         itemPrice += 20;
       }
-      
+
       // Add extra espresso shot (+30 pesos) if allowed and selected
       if (item.extraEspresso && menuItem.allowExtraEspresso) {
         itemPrice += 30;
       }
-      
+
       // Add oat milk substitute (+40 pesos) if allowed and selected
       if (item.oatMilk && menuItem.allowOatMilk) {
         itemPrice += 40;
       }
-      
+
       // Validate temperature option
       if ((menuItem.temperatureOption === 'iced-only' || menuItem.temperatureOption === 'iced') && temperature !== 'iced') {
         return res.status(400).json({
@@ -148,14 +148,14 @@ router.post('/', async (req, res) => {
           message: `${menuItem.name} is only available in iced`,
         });
       }
-      
+
       if (menuItem.temperatureOption === 'hot' && temperature !== 'hot') {
         return res.status(400).json({
           success: false,
           message: `${menuItem.name} is only available in hot`,
         });
       }
-      
+
       // Validate add-ons
       if (item.extraEspresso && !menuItem.allowExtraEspresso) {
         return res.status(400).json({
@@ -163,14 +163,14 @@ router.post('/', async (req, res) => {
           message: `${menuItem.name} does not support extra espresso shot`,
         });
       }
-      
+
       if (item.oatMilk && !menuItem.allowOatMilk) {
         return res.status(400).json({
           success: false,
           message: `${menuItem.name} does not support oat milk substitute`,
         });
       }
-      
+
       const itemTotal = itemPrice * quantity;
       totalAmount += itemTotal;
 
@@ -230,7 +230,7 @@ router.get('/table/:tableId', async (req, res) => {
   try {
     // Get the active billing group
     const activeBillingGroup = await BillingGroup.findOne({ isActive: true });
-    
+
     if (!activeBillingGroup) {
       // If no active billing group, return empty array
       return res.json({
@@ -240,12 +240,12 @@ router.get('/table/:tableId', async (req, res) => {
     }
 
     // Get orders for the table that belong to the active billing group
-    const orders = await Order.find({ 
+    const orders = await Order.find({
       tableId: req.params.tableId,
       billingGroupId: activeBillingGroup._id
     })
       .sort({ createdAt: -1 });
-    
+
     res.json({
       success: true,
       orders,
@@ -267,7 +267,7 @@ router.get('/:id', async (req, res) => {
     const order = await Order.findById(req.params.id)
       .populate('tableId', 'tableNumber location')
       .populate('billingGroupId', 'name');
-    
+
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -295,7 +295,7 @@ router.put('/:id/status', protect, async (req, res) => {
   try {
     const { status } = req.body;
     const order = await Order.findById(req.params.id);
-    
+
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -305,9 +305,9 @@ router.put('/:id/status', protect, async (req, res) => {
 
     const previousOrderStatus = order.status;
     const previousItemStatus = order.items.length === 1 ? order.items[0].status : null;
-    
+
     order.status = status;
-    
+
     // If order has only one item, update item status to match order status
     if (order.items.length === 1) {
       // Map order status to item status
@@ -319,14 +319,14 @@ router.put('/:id/status', protect, async (req, res) => {
         'completed': 'delivered',
         'cancelled': 'pending', // Keep item as pending if order is cancelled
       };
-      
+
       const newItemStatus = statusMap[status] || order.items[0].status;
       if (newItemStatus !== order.items[0].status) {
         order.items[0].status = newItemStatus;
         console.log(`[Orders] Auto-updating item status to ${newItemStatus} (single item order)`);
       }
     }
-    
+
     if (status === 'completed') {
       order.completedAt = new Date();
       order.preparedBy = req.user._id;
@@ -372,6 +372,31 @@ router.put('/:id/status', protect, async (req, res) => {
   }
 });
 
+// Helper function to calculate order status from item statuses
+const calculateOrderStatusFromItems = (items) => {
+  if (items.length === 0) return 'pending';
+
+  const statuses = items.map(item => item.status);
+
+  // All delivered
+  if (statuses.every(s => s === 'delivered')) {
+    return 'ready'; // Manager will mark as completed
+  }
+
+  // All ready
+  if (statuses.every(s => s === 'ready')) {
+    return 'ready';
+  }
+
+  // Any preparing
+  if (statuses.some(s => s === 'preparing')) {
+    return 'preparing';
+  }
+
+  // Default: pending/confirmed
+  return 'confirmed';
+};
+
 // @route   PUT /api/orders/:id/items/:itemId/status
 // @desc    Update item status within an order
 // @access  Private (barista)
@@ -379,7 +404,7 @@ router.put('/:id/items/:itemId/status', protect, async (req, res) => {
   try {
     const { status } = req.body;
     const order = await Order.findById(req.params.id);
-    
+
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -397,24 +422,32 @@ router.put('/:id/items/:itemId/status', protect, async (req, res) => {
 
     const previousOrderStatus = order.status;
     item.status = status;
-    
-    // If order has only one item, update order status to match item status
+
+    // Auto-update order status based on all item statuses
     if (order.items.length === 1) {
-      // Map item status to order status
+      // Single item: map directly
       const statusMap = {
         'pending': 'pending',
         'preparing': 'preparing',
         'ready': 'ready',
         'delivered': 'completed',
       };
-      
+
       const newOrderStatus = statusMap[status] || order.status;
       if (newOrderStatus !== order.status) {
         order.status = newOrderStatus;
         console.log(`[Orders] Auto-updating order status to ${newOrderStatus} (single item order)`);
       }
+    } else {
+      // Multi-item: calculate based on all items
+      const calculatedStatus = calculateOrderStatusFromItems(order.items);
+      if (calculatedStatus !== order.status && order.status !== 'completed') {
+        // Don't auto-change completed status (manager control)
+        order.status = calculatedStatus;
+        console.log(`[Orders] Auto-updating order status to ${calculatedStatus} based on item statuses`);
+      }
     }
-    
+
     await order.save();
 
     // Emit socket event

@@ -9,7 +9,7 @@ export default function BaristaDashboard() {
   const queryClient = useQueryClient();
   const { getRefetchInterval } = useSettings();
   const [statusFilter, setStatusFilter] = useState(null); // null = all active, 'pending', 'preparing', 'ready', 'today'
-  const [viewTab, setViewTab] = useState('barista'); // 'barista' or 'kitchen'
+  const [viewTab, setViewTab] = useState('main'); // 'main', 'barista' or 'kitchen'
   const [updatingItemId, setUpdatingItemId] = useState(null); // Track which item is being updated
   const [updatingOrderId, setUpdatingOrderId] = useState(null); // Track which order is being updated
 
@@ -50,6 +50,12 @@ export default function BaristaDashboard() {
   // For 'today' filter, backend returns all orders from today
   // For other filters, backend returns orders matching that status
   const filteredOrders = orders.filter(order => {
+    // Main view shows all orders
+    if (viewTab === 'main') {
+      return true;
+    }
+
+    // Barista/Kitchen views only show orders that have relevant items
     const hasRelevantItems = order.items.some(item => {
       const category = item.menuItemId?.category || '';
       const isBeverage = category && ['Beverages', 'beverages', 'Beverage', 'beverage'].includes(category);
@@ -233,6 +239,15 @@ export default function BaristaDashboard() {
         <div className="max-w-7xl mx-auto px-4 pb-2">
           <div className="flex gap-2 border-b border-gray-200">
             <button
+              onClick={() => setViewTab('main')}
+              className={`px-6 py-3 font-semibold text-sm transition-all ${viewTab === 'main'
+                ? 'text-gray-900 border-b-2 border-gray-900 bg-gray-100'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+            >
+              📋 Main View
+            </button>
+            <button
               onClick={() => setViewTab('barista')}
               className={`px-6 py-3 font-semibold text-sm transition-all ${viewTab === 'barista'
                 ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
@@ -292,6 +307,7 @@ export default function BaristaDashboard() {
                 <OrderCard
                   key={order._id}
                   order={order}
+                  viewMode={viewTab}
                   onItemStatusChange={handleItemStatusChange}
                   onOrderStatusChange={handleOrderStatusChange}
                   onStartOrder={handleStartOrder}
